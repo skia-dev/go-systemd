@@ -87,7 +87,7 @@ type Conn struct {
 // Callers should call Close() when done with the connection.
 func New() (*Conn, error) {
 	return newConnection(func() (*dbus.Conn, error) {
-		return dbusAuthHelloConnection(dbus.SystemBusPrivate)
+		return dbusAuthHelloConnection(noOptAdapter(dbus.SystemBusPrivate))
 	})
 }
 
@@ -96,7 +96,7 @@ func New() (*Conn, error) {
 // Callers should call Close() when done with the connection.
 func NewUserConnection() (*Conn, error) {
 	return newConnection(func() (*dbus.Conn, error) {
-		return dbusAuthHelloConnection(dbus.SessionBusPrivate)
+		return dbusAuthHelloConnection(noOptAdapter(dbus.SessionBusPrivate))
 	})
 }
 
@@ -184,4 +184,11 @@ func dbusAuthHelloConnection(createBus func() (*dbus.Conn, error)) (*dbus.Conn, 
 
 func systemdObject(conn *dbus.Conn) dbus.BusObject {
 	return conn.Object("org.freedesktop.systemd1", dbus.ObjectPath("/org/freedesktop/systemd1"))
+}
+
+// noOptAdapter wraps the given function in a function without the variadic argument.
+func noOptAdapter(optFn func(...dbus.ConnOption) (*dbus.Conn, error)) func() (*dbus.Conn, error) {
+	return func() (*dbus.Conn, error) {
+		return optFn()
+	}
 }
